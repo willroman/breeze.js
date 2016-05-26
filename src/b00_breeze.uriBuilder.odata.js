@@ -3,7 +3,7 @@
     factory(breeze);
   } else if (typeof require === "function" && typeof exports === "object" && typeof module === "object") {
     // CommonJS or Node: hard-coded dependency on "breeze"
-    factory(require("breeze-client"));
+    factory(require("breeze"));
   } else if (typeof define === "function" && define["amd"]) {
     // AMD anonymous module with hard-coded dependency on "breeze"
     define(["breeze"], factory);
@@ -47,7 +47,7 @@
       queryOptions["$inlinecount"] = "allpages";
     }
 
-    var qoText = toQueryOptionsString(queryOptions);
+    var qoText = toQueryOptionsString(queryOptions, entityQuery.parameters);
     return entityQuery.resourceName + qoText;
 
     // private methods to this func.
@@ -87,7 +87,7 @@
       return frag;
     }
 
-    function toQueryOptionsString(queryOptions) {
+    function toQueryOptionsString(queryOptions, params) {
       var qoStrings = [];
       for (var qoName in queryOptions) {
         var qoValue = queryOptions[qoName];
@@ -102,11 +102,53 @@
         }
       }
 
+      // Allow for custom params ( withParameters call ) to be sent to server
+      // If there are custom params .. add them directly to qoStrings.
+      if (params) {
+        qoStrings.push(encodeParams(params));
+      }
+
       if (qoStrings.length > 0) {
         return "?" + qoStrings.join("&");
       } else {
         return "";
       }
+    }
+
+    // encodeParams - copied from b00_breeze_ajax.angular.js
+    function encodeParams(obj) {
+        var query = '';
+        var subValue, innerObj, fullSubName;
+
+        for (var name in obj) {
+            var value = obj[name];
+
+            if (value instanceof Array) {
+                for (var i = 0; i < value.length; ++i) {
+                    subValue = value[i];
+                    fullSubName = name + '[' + i + ']';
+                    innerObj = {};
+                    innerObj[fullSubName] = subValue;
+                    query += encodeParams(innerObj) + '&';
+                }
+            } else if (value && value.toISOString) { // a feature of Date-like things
+                query += encodeURIComponent(name) + '=' + encodeURIComponent(value.toISOString()) + '&';
+            } else if (value instanceof Object) {
+                for (var subName in value) {
+                    subValue = value[subName];
+                    fullSubName = name + '[' + subName + ']';
+                    innerObj = {};
+                    innerObj[fullSubName] = subValue;
+                    query += encodeParams(innerObj) + '&';
+                }
+            } else if (value === null) {
+                query += encodeURIComponent(name) + '=&';
+            } else if (value !== undefined) {
+                query += encodeURIComponent(name) + '=' + encodeURIComponent(value) + '&';
+            }
+        }
+
+        return query.length ? query.substr(0, query.length - 1) : query;
     }
   };
 
