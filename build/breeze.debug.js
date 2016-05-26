@@ -1,3 +1,6 @@
+/* */
+"format global";
+
 /*
  * Copyright 2014 IdeaBlade, Inc.  All Rights Reserved.  
  * Use, reproduction, distribution, and modification of this code is subject to the terms and 
